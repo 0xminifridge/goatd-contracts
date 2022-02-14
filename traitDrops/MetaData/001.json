@@ -1,0 +1,30 @@
+{
+   //Example Metadata for Trait Drops - Junk
+   
+    "name": "The Spot Trait Drops",
+    "description": "GOAT'd Trait Drops",
+    "image": "",
+    "attributes":
+        [
+        {
+        "trait_type": "Trait Type",
+        "value":"Background"
+        },
+        {
+        "trait_type": "Trait",
+        "value":"Hell Fire"
+        }
+        {
+        "trait_type": "Rarity",
+        "value":"Legendary"
+        }
+        {
+        "trait_type": "ID",
+        "value":"001"
+        }
+        {
+        "trait_type": "Value",
+        "value":"4"
+        }
+        ]
+    }
