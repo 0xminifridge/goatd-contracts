@@ -1,0 +1,36 @@
+{
+    "name": "Goatd",
+    "description": "Goatd: A customizable pfp from The Spot!",
+    "image": "https://goatd.s3.filebase.com/1.png",
+    "attributes":
+        [
+        {
+        "trait_type": "Background",
+        "value":""
+        },
+        {
+        "trait_type": "Body",
+        "value":""
+        },
+        {
+        "trait_type": "Head",
+        "value":""
+        },
+        {
+        "trait_type": "Mouth",
+        "value":""
+        },
+        {
+        "trait_type": "Eyes",
+        "value":""
+        },
+        {
+        "trait_type": "Headwear",
+        "value":""
+        },
+        {
+        "trait_type": "Gen",
+        "value":""
+        }
+        ]
+    }
