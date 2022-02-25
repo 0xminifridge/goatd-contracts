@@ -396,39 +396,39 @@ interface ITRAIT {
 }
 
 contract GOATd is ERC721, ReentrancyGuard, Ownable {
-	using Counters for Counters.Counter;
-	using Strings for uint256;
+    using Counters for Counters.Counter;
+    using Strings for uint256;
 
-	bool public paused = true;
+    bool public paused = true;
 
-	string private baseURI = "https://goatd.s3.filebase.com/json/";
-	string private uriSuffix = ".json";
+    string private baseURI = "https://goatd.s3.filebase.com/json/";
+    string private uriSuffix = ".json";
 
-	uint256 public cost = 1 ether;
+    uint256 public cost = 1 ether;
 
-	uint256 public royalties = 100;
+    uint256 public royalties = 100;
 
-	mapping(bytes => uint8) public availableDNA;
+    mapping(bytes => uint8) public availableDNA;
 
-	address private treasuryAddress = 0x32bD2811Fb91BC46756232A0B8c6b2902D7d8763;
-	address private traitsAddress = 0x9521807ADF320D1CDF87AFDf875Bf438d1D92d87;
+    address private treasuryAddress = 0x32bD2811Fb91BC46756232A0B8c6b2902D7d8763;
+    address private traitsAddress = 0x9521807ADF320D1CDF87AFDf875Bf438d1D92d87;
 
     ITRAIT traitsContract = ITRAIT(traitsAddress);
 
-	Counters.Counter private supply;
+    Counters.Counter private supply;
 
-	uint256 private constant PERCENTAGE_MULTIPLIER = 10000;
+    uint256 private constant PERCENTAGE_MULTIPLIER = 10000;
 
-	constructor() ERC721("GOATd PFP", "GOATd") {
+    constructor() ERC721("GOATd PFP", "GOATd") {
 
-	}
+    }
 
-	function supportsInterface(bytes4 interfaceID) public view override returns(bool) {
-		return interfaceID == type(IERC2981Royalties).interfaceId || super.supportsInterface(interfaceID);
-	}
+    function supportsInterface(bytes4 interfaceID) public view override returns(bool) {
+	return interfaceID == type(IERC2981Royalties).interfaceId || super.supportsInterface(interfaceID);
+    }
 
-	function mint(uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear) public payable nonReentrant {
-		require(bg > 0 && bg < 100 && 
+    function mint(uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear) public payable nonReentrant {
+	require(bg > 0 && bg < 100 && 
                 body >= 100 && body < 200 &&
                 head >= 200 && head < 300 &&
                 eyes >= 300 && eyes < 400 &&
@@ -446,13 +446,13 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
                                              Strings.toString(eyes), Strings.toString(mouth), Strings.toString(headwear));
 
         require(availableDNA[DNA] == 0, "GOATd: Combination specified already exists!");
-		require(!paused, "Minting is paused");
-		require(msg.value >= cost, "Insufficient funds");
+	require(!paused, "Minting is paused");
+	require(msg.value >= cost, "Insufficient funds");
 
-		_mintLoop(_msgSender(), bg, body, head, eyes, mouth, headwear);
+	_mintLoop(_msgSender(), bg, body, head, eyes, mouth, headwear);
 
         availableDNA[DNA] = 1;
-	}
+    }
 
     function _mintLoop(address to, uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear) internal {
         traitsContract.burnSpotDrop(bg, to);
@@ -462,94 +462,94 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
         traitsContract.burnSpotDrop(mouth, to);
         traitsContract.burnSpotDrop(headwear, to);
 		
-		supply.increment();
+	supply.increment();
 
-		_safeMint(to, supply.current());
+	_safeMint(to, supply.current());
 		
-	}
+    }
 
-	function flipPausedState() public onlyOwner {
-		paused = !paused;
-	}
+    function flipPausedState() public onlyOwner {
+	paused = !paused;
+    }
 
-	function withdraw() public onlyOwner {
-		(bool success, ) = payable(treasuryAddress).call{ value: address(this).balance}("");
-		require(success, "AVAX Transaction: Failed to transfer funds to the owner wallet!");
-	}
+    function withdraw() public onlyOwner {
+	(bool success, ) = payable(treasuryAddress).call{ value: address(this).balance}("");
+	require(success, "AVAX Transaction: Failed to transfer funds to the owner wallet!");
+    }
 
-	function royaltyInfo(uint256, uint256 value) external view returns(address, uint256) {
-		return (treasuryAddress, value * royalties / PERCENTAGE_MULTIPLIER);
-	}
+    function royaltyInfo(uint256, uint256 value) external view returns(address, uint256) {
+	return (treasuryAddress, value * royalties / PERCENTAGE_MULTIPLIER);
+    }
 
-	function tokenURI(uint256 tokenID) public view override returns(string memory) {
-		require(_exists(tokenID), "ERC721Metadata: URI query for nonexistent token");
+    function tokenURI(uint256 tokenID) public view override returns(string memory) {
+	require(_exists(tokenID), "ERC721Metadata: URI query for nonexistent token");
 
-		string memory currentBaseURI = _baseURI();
+	string memory currentBaseURI = _baseURI();
 
-		return bytes(currentBaseURI).length > 0 ? string( abi.encodePacked(currentBaseURI, tokenID.toString(), uriSuffix) ) : "";
-	}
+	return bytes(currentBaseURI).length > 0 ? string( abi.encodePacked(currentBaseURI, tokenID.toString(), uriSuffix) ) : "";
+    }
 
     function _baseURI() internal view override returns(string memory) {
-		return baseURI;
-	}
+	return baseURI;
+    }
 
-	function totalSupply() public view returns(uint256) {
-		return supply.current();
-	}
+    function totalSupply() public view returns(uint256) {
+	return supply.current();
+    }
 
     function checkDNA(string calldata DNA) public view returns(uint8) {
         return availableDNA[abi.encodePacked(DNA)];
     }
 
-	function walletOfOwner(address _address) public view returns(uint256[] memory) {
-		uint256 ownerTokenCount = balanceOf(_address);
+    function walletOfOwner(address _address) public view returns(uint256[] memory) {
+	uint256 ownerTokenCount = balanceOf(_address);
 
-		uint256[] memory ownedTokenIDs = new uint256[](ownerTokenCount);
+	uint256[] memory ownedTokenIDs = new uint256[](ownerTokenCount);
 
-		uint256 tokenIndex = 1;
-		uint256 ownedTokenIndex = 0;
+	uint256 tokenIndex = 1;
+	uint256 ownedTokenIndex = 0;
 
-		while (ownedTokenIndex < ownerTokenCount && tokenIndex <= totalSupply()) {
-			address owner = ownerOf(tokenIndex);
+	while (ownedTokenIndex < ownerTokenCount && tokenIndex <= totalSupply()) {
+		address owner = ownerOf(tokenIndex);
 
-			if (owner == _address) {
-				ownedTokenIDs[ownedTokenIndex] = tokenIndex;
+		if (owner == _address) {
+			ownedTokenIDs[ownedTokenIndex] = tokenIndex;
 
-				ownedTokenIndex++;
-			}
-
-			tokenIndex++;
+			ownedTokenIndex++;
 		}
 
-		return ownedTokenIDs;
+		tokenIndex++;
 	}
 
-	function setBaseURI(string memory newBaseURI) public onlyOwner {
-		baseURI = newBaseURI;
-	}
+	return ownedTokenIDs;
+    }
 
-	function setURIsuffix(string memory newSuffix) public onlyOwner {
-		uriSuffix = newSuffix;
-	}
+    function setBaseURI(string memory newBaseURI) public onlyOwner {
+	baseURI = newBaseURI;
+    }
 
-	function setCost(uint256 newCost) public onlyOwner {
-		cost = newCost;
-	}
+    function setURIsuffix(string memory newSuffix) public onlyOwner {
+	uriSuffix = newSuffix;
+    }
 
-	function setRoyalties(uint256 newValue) public onlyOwner {
-		royalties = newValue;
-	}
+    function setCost(uint256 newCost) public onlyOwner {
+	cost = newCost;
+    }
 
-	function setTreasuryAddress(address newTreasuryAddress) public onlyOwner {
-		treasuryAddress = newTreasuryAddress;
-	}
+    function setRoyalties(uint256 newValue) public onlyOwner {
+	royalties = newValue;
+    }
+
+    function setTreasuryAddress(address newTreasuryAddress) public onlyOwner {
+	treasuryAddress = newTreasuryAddress;
+    }
 
     function setTraitsAddress(address newTraitsAddress) public onlyOwner {
-		traitsAddress = newTraitsAddress;
+	traitsAddress = newTraitsAddress;
         traitsContract = ITRAIT(traitsAddress);
-	}
+    }
 
-	// Function to receive Ether. msg.data must be empty
+    // Function to receive Ether. msg.data must be empty
     receive() external payable {}
 
     // Fallback function is called when msg.data is not empty
