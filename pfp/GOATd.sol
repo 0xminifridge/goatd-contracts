@@ -440,7 +440,10 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
         require(traitsContract.balanceOf(_msgSender(), head) > 0, "GOATd: You don't own that head!");
         require(traitsContract.balanceOf(_msgSender(), eyes) > 0, "GOATd: You don't own that eyes!");
         require(traitsContract.balanceOf(_msgSender(), mouth) > 0, "GOATd: You don't own that mouth!");
-        require(traitsContract.balanceOf(_msgSender(), headwear) > 0, "GOATd: You don't own that headwear!");
+        
+	if (headwear > 599){
+        	require(traitsContract.balanceOf(_msgSender(), headwear) > 0, "GOATd: You don't own that headwear!");
+	}
 
         bytes memory DNA = abi.encodePacked(Strings.toString(bg), Strings.toString(body), Strings.toString(head), 
                                              Strings.toString(eyes), Strings.toString(mouth), Strings.toString(headwear));
@@ -460,7 +463,10 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
         traitsContract.burnSpotDrop(head, to);
         traitsContract.burnSpotDrop(eyes, to);
         traitsContract.burnSpotDrop(mouth, to);
-        traitsContract.burnSpotDrop(headwear, to);
+        
+	if (headwear > 599){
+        	traitsContract.burnSpotDrop(headwear, to);
+	}
 		
 	supply.increment();
 
