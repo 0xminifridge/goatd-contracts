@@ -409,6 +409,7 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
     uint256 public royalties = 100;
 
     mapping(bytes => uint8) public availableDNA;
+    mapping(uint256 => uint8) public notBurnable;
 
     address private treasuryAddress = 0x32bD2811Fb91BC46756232A0B8c6b2902D7d8763;
     address private traitsAddress = 0x9521807ADF320D1CDF87AFDf875Bf438d1D92d87;
@@ -428,20 +429,34 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
     }
 
     function mint(uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear) public payable nonReentrant {
-	require(bg > 0 && bg < 100 && 
-                body >= 100 && body < 200 &&
-                head >= 200 && head < 300 &&
-                eyes >= 300 && eyes < 400 &&
-                mouth >= 400 && mouth < 500 &&
-                headwear >= 600, "GOATd: At least one trait specified is invalid!");
+	require(((bg > 0 && bg < 100) || notBurnable[bg] == 1) && 
+                ((body >= 100 && body < 200) || notBurnable[body] == 1) &&
+                ((head >= 200 && head < 300) || notBurnable[head] == 1) &&
+                ((eyes >= 300 && eyes < 400) || notBurnable[eyes] == 1) &&
+                ((mouth >= 400 && mouth < 500) || notBurnable[mouth] == 1) &&
+                (headwear >= 600 || notBurnable[headwear] == 1), "GOATd: At least one trait specified is invalid!");
         
-        require(traitsContract.balanceOf(_msgSender(), bg) > 0, "GOATd: You don't own that background!");
-        require(traitsContract.balanceOf(_msgSender(), body) > 0, "GOATd: You don't own that body!");
-        require(traitsContract.balanceOf(_msgSender(), head) > 0, "GOATd: You don't own that head!");
-        require(traitsContract.balanceOf(_msgSender(), eyes) > 0, "GOATd: You don't own that eyes!");
-        require(traitsContract.balanceOf(_msgSender(), mouth) > 0, "GOATd: You don't own that mouth!");
-        
-	if (headwear > 599){
+	if (notBurnable[bg] == 0){
+        	require(traitsContract.balanceOf(_msgSender(), bg) > 0, "GOATd: You don't own that background!");
+	}
+		
+	if (notBurnable[body] == 0){
+		require(traitsContract.balanceOf(_msgSender(), body) > 0, "GOATd: You don't own that body!");
+	}
+		
+	if (notBurnable[head] == 0){
+		require(traitsContract.balanceOf(_msgSender(), head) > 0, "GOATd: You don't own that head!");
+	}
+		
+	if (notBurnable[eyes] == 0){
+		require(traitsContract.balanceOf(_msgSender(), eyes) > 0, "GOATd: You don't own that eyes!");
+	}
+		
+	if (notBurnable[mouth] == 0){
+		require(traitsContract.balanceOf(_msgSender(), mouth) > 0, "GOATd: You don't own that mouth!");
+	}
+
+	if (notBurnable[headwear] == 0){
         	require(traitsContract.balanceOf(_msgSender(), headwear) > 0, "GOATd: You don't own that headwear!");
 	}
 
@@ -458,13 +473,27 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
     }
 
     function _mintLoop(address to, uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear) internal {
-        traitsContract.burnSpotDrop(bg, to);
-        traitsContract.burnSpotDrop(body, to);
-        traitsContract.burnSpotDrop(head, to);
-        traitsContract.burnSpotDrop(eyes, to);
-        traitsContract.burnSpotDrop(mouth, to);
-        
-	if (headwear > 599){
+        if (notBurnable[bg] == 0){
+		traitsContract.burnSpotDrop(bg, to);
+	}
+		
+	if (notBurnable[body] == 0){
+		traitsContract.burnSpotDrop(body, to);
+	}
+
+	if (notBurnable[head] == 0){
+		traitsContract.burnSpotDrop(head, to);
+	}
+		
+	if (notBurnable[eyes] == 0){
+		traitsContract.burnSpotDrop(eyes, to);
+	}
+		
+	if (notBurnable[mouth] == 0){
+		traitsContract.burnSpotDrop(mouth, to);
+	}
+
+	if (notBurnable[headwear] == 0){
         	traitsContract.burnSpotDrop(headwear, to);
 	}
 		
@@ -553,6 +582,12 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
     function setTraitsAddress(address newTraitsAddress) public onlyOwner {
 	traitsAddress = newTraitsAddress;
         traitsContract = ITRAIT(traitsAddress);
+    }
+    
+    function addNotBurnable (uint256[] calldata _traits) public onlyOwner {
+	for (uint256 i = 0; i < _traits.length; i++) {
+		notBurnable[_traits[i]] = 1;
+	}
     }
 
     // Function to receive Ether. msg.data must be empty
