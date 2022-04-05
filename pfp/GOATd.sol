@@ -412,20 +412,59 @@ abstract contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
 	function _afterTokenTransfer(address from, address to, uint256 tokenID) internal virtual {}
 }
 
+
+abstract contract ERC721URIStorage is ERC721 {
+    using Strings for uint256;
+
+    // Optional mapping for token URIs
+    mapping(uint256 => string) private _tokenURIs;
+
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
+
+        string memory _tokenURI = _tokenURIs[tokenId];
+        string memory base = _baseURI();
+
+        // If there is no base URI, return the token URI.
+        if (bytes(base).length == 0) {
+            return _tokenURI;
+        }
+        // If both are set, concatenate the baseURI and tokenURI (via abi.encodePacked).
+        if (bytes(_tokenURI).length > 0) {
+            return string(abi.encodePacked(base, _tokenURI));
+        }
+
+        return super.tokenURI(tokenId);
+    }
+
+
+    function _setTokenURI(uint256 tokenId, string memory _tokenURI) internal virtual {
+        require(_exists(tokenId), "ERC721URIStorage: URI set of nonexistent token");
+        _tokenURIs[tokenId] = _tokenURI;
+    }
+
+
+    function _burn(uint256 tokenId) internal virtual override {
+        super._burn(tokenId);
+
+        if (bytes(_tokenURIs[tokenId]).length != 0) {
+            delete _tokenURIs[tokenId];
+        }
+    }
+}
+
 interface ITRAIT {
     function burnSpotDrop(uint256 typeId, address burnTokenAddress) external;
 
     function balanceOf(address owner, uint256 typeId) external view returns (uint256);
 }
 
-contract GOATd is ERC721, ReentrancyGuard, Ownable {
+contract GOATd is ERC721URIStorage, ReentrancyGuard, Ownable {
 	using Counters for Counters.Counter;
 	using Strings for uint256;
 
 	bool public paused = true;
-
-	string private baseURI = "https://goatd.s3.filebase.com/json/";
-	string private uriSuffix = ".json";
 
 	uint256 public cost = 1 ether;
 
@@ -457,7 +496,7 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
 		return interfaceID == type(IERC2981Royalties).interfaceId || super.supportsInterface(interfaceID);
 	}
 
-	function mint(uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear) public payable nonReentrant {
+	function mint(uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear, string calldata uri) public payable nonReentrant {
 		require(((bg > 0 && bg < 100) || notBurnable[bg] == 1) && 
                 ((body >= 100 && body < 200) || notBurnable[body] == 1) &&
                 ((head >= 200 && head < 300) || notBurnable[head] == 1) &&
@@ -496,14 +535,14 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
 		require(!paused, "Minting is paused");
 		require(msg.value >= cost, "Insufficient funds");
 
-		_mintLoop(_msgSender(), bg, body, head, eyes, mouth, headwear);
+		_mintLoop(_msgSender(), bg, body, head, eyes, mouth, headwear, uri);
 
         availableDNA[DNA] = 1;
 
 		emit GoatMinted(supply.current(), _msgSender(), [bg, body, head, eyes, mouth, headwear]);
 	}
 
-    function _mintLoop(address to, uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear) internal {
+    function _mintLoop(address to, uint256 bg, uint256 body, uint256 head, uint256 eyes, uint256 mouth, uint256 headwear, string memory uri) internal {
         if (notBurnable[bg] == 0){
 			traitsContract.burnSpotDrop(bg, to);
 		}
@@ -531,6 +570,8 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
 		supply.increment();
 
 		_safeMint(to, supply.current());
+
+		_setTokenURI(supply.current(), uri);
 		
 	}
 
@@ -545,18 +586,6 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
 
 	function royaltyInfo(uint256, uint256 value) external view returns(address, uint256) {
 		return (treasuryAddress, value * royalties / PERCENTAGE_MULTIPLIER);
-	}
-
-	function tokenURI(uint256 tokenID) public view override returns(string memory) {
-		require(_exists(tokenID), "ERC721Metadata: URI query for nonexistent token");
-
-		string memory currentBaseURI = _baseURI();
-
-		return bytes(currentBaseURI).length > 0 ? string( abi.encodePacked(currentBaseURI, tokenID.toString(), uriSuffix) ) : "";
-	}
-
-    function _baseURI() internal view override returns(string memory) {
-		return baseURI;
 	}
 
 	function totalSupply() public view returns(uint256) {
@@ -590,14 +619,6 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
 		return ownedTokenIDs;
 	}
 
-	function setBaseURI(string memory newBaseURI) public onlyOwner {
-		baseURI = newBaseURI;
-	}
-
-	function setURIsuffix(string memory newSuffix) public onlyOwner {
-		uriSuffix = newSuffix;
-	}
-
 	function setCost(uint256 newCost) public onlyOwner {
 		cost = newCost;
 	}
@@ -619,6 +640,10 @@ contract GOATd is ERC721, ReentrancyGuard, Ownable {
 		for (uint256 i = 0; i < _traits.length; i++) {
 			notBurnable[_traits[i]] = 1;
 		}
+	}
+
+	function changeURI (uint256 tokenID, string calldata uri) public onlyOwner {
+		_setTokenURI(tokenID, uri);
 	}
 
 	// Function to receive Ether. msg.data must be empty
