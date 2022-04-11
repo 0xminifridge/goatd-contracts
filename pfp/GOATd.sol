@@ -528,7 +528,7 @@ contract GOATd is ERC721URIStorage, ReentrancyGuard, Ownable {
         	require(traitsContract.balanceOf(_msgSender(), headwear) > 0, "GOATd: You don't own that headwear!");
 		}
 
-        bytes memory DNA = abi.encodePacked(Strings.toString(bg), Strings.toString(body), Strings.toString(head), 
+        bytes memory DNA = abi.encodePacked(Strings.toString(body), Strings.toString(head), 
                                              Strings.toString(eyes), Strings.toString(mouth), Strings.toString(headwear));
 
         require(availableDNA[DNA] == 0, "GOATd: Combination specified already exists!");
